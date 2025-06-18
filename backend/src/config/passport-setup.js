@@ -1,0 +1,2 @@
+REACT_APP_GOOGLE_CLIENT_ID=824952161143-lqht95bkckbh84japnooirhh01dv5i1g.apps.googleusercontent.com
+REACT_APP_API_BASE_URL=http://localhost:5002/api
