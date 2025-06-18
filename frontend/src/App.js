@@ -9,9 +9,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Preference from './pages/Preference';
 import Explore from './pages/Explore';
-import Tours from './pages/Tours';
+import SavedTours from './pages/Tours';
 import Destinations from './pages/Destinations';
-import PlanTour from './pages/PlanTour';
+import PlanYourTour from './pages/PlanYourTour';
 import ProtectedRoute from './components/ProtectedRoute';
 import Recommendation from './pages/Recommendation';
 import CompleteProfile from './pages/CompleteProfile';
@@ -74,9 +74,9 @@ function AppContent() {
             <Explore />
           </ProtectedRoute>
         } />
-        <Route path="/tours" element={
+        <Route path="/saved-tours" element={
           <ProtectedRoute>
-            <Tours />
+            <SavedTours />
           </ProtectedRoute>
         } />
         <Route path="/recommendation" element={
@@ -91,7 +91,7 @@ function AppContent() {
         } />
         <Route path="/plan-tour" element={
           <ProtectedRoute>
-            <PlanTour />
+            <PlanYourTour />
           </ProtectedRoute>
         } />
         <Route path="/complete-profile" element={<CompleteProfile />} />

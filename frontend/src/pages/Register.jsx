@@ -18,15 +18,6 @@ export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [preferences, setPreferences] = useState([]);
-
-  const handlePreferenceChange = (type) => {
-    setPreferences((prev) =>
-      prev.includes(type)
-        ? prev.filter((t) => t !== type)
-        : [...prev, type]
-    );
-  };
 
   const handleGoogleSuccess = async (response) => {
     console.log("Google signup success (frontend received token):", response);
@@ -85,7 +76,7 @@ export default function Register() {
     try {
       setError('');
       setLoading(true);
-      const userData = { name, email, password, preferences };
+      const userData = { name, email, password };
       await registerUser(userData);
       navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
     } catch (err) {
@@ -153,20 +144,6 @@ export default function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
-            </div>
-            <div>
-              <label>Preferences:</label>
-              {PLACE_TYPES.map((type) => (
-                <label key={type}>
-                  <input
-                    type="checkbox"
-                    value={type}
-                    checked={preferences.includes(type)}
-                    onChange={() => handlePreferenceChange(type)}
-                  />
-                  {type}
-                </label>
-              ))}
             </div>
           </div>
 

@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from './axios';
 
-const API_URL = 'http://localhost:5002/api';
+const API_URL = '/auth';
 
 export const saveUserPreferences = async (userId, preferences) => {
   try {
@@ -9,7 +9,7 @@ export const saveUserPreferences = async (userId, preferences) => {
       throw new Error('No authentication token found.');
     }
 
-    const response = await axios.put(`${API_URL}/auth/profile`, { preferences }, {
+    const response = await axios.put(`${API_URL}/profile`, { preferences }, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -28,7 +28,7 @@ export const getUserPreferences = async (userId) => {
       throw new Error('No authentication token found.');
     }
 
-    const response = await axios.get(`${API_URL}/auth/profile`, {
+    const response = await axios.get(`${API_URL}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

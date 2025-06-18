@@ -35,6 +35,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userError, setUserError] = useState(null);
 
   // Fetch data from backend
   useEffect(() => {
@@ -55,7 +58,7 @@ const Dashboard = () => {
 
       try {
         // Fetch User Plans (for stats and recent activities)
-        const plansResponse = await axios.get('/api/plan', {
+        const plansResponse = await axios.get('http://localhost:5002/api/plan/all', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -90,7 +93,7 @@ const Dashboard = () => {
         setRecentActivities(activities.slice(0, 3)); 
 
         // Fetch Recommended Tours (Places)
-        const recommenderResponse = await axios.get('/api/recommender/hybrid', {
+        const recommenderResponse = await axios.get('http://localhost:5002/api/recommend/hybrid', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -118,6 +121,27 @@ const Dashboard = () => {
 
     fetchData();
   }, [user]); 
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoadingUsers(true);
+      setUserError(null);
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const response = await fetch('http://localhost:5002/api/auth/users', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch users');
+        const data = await response.json();
+        setUsers(data);
+      } catch (err) {
+        setUserError(err.message);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const filteredTours = recommendedTours.filter(tour =>
     tour.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -151,46 +175,31 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-200 pt-20 font-sans" style={{ fontFamily: 'Poppins, Inter, Arial, sans-serif', backgroundImage: 'url(https://www.transparenttextures.com/patterns/diamond-upholstery.png)' }}>
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-12">
+
         {/* Dashboard Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8"
+          className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12"
         >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, <span className="text-blue-600">{user?.name}</span>!
+            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-600 to-pink-500 drop-shadow mb-2" style={{ fontFamily: 'Poppins, Inter, Arial, sans-serif' }}>
+              Welcome back, <span className="underline decoration-wavy decoration-blue-400">{user?.name}</span>!
             </h1>
-            <p className="text-gray-600 mt-2">
-              Here's what's happening with your travel plans
+            <p className="text-lg text-gray-700 mt-2 font-medium">
+              Ready to plan your next adventure? Check your stats and profile below!
             </p>
           </div>
-          
           <div className="mt-4 md:mt-0 flex items-center space-x-4">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search tours..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <button className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-              <FaFilter className="mr-2 text-gray-600" />
-              <span>Filters</span>
-            </button>
-            <Link
-              to="/plan-tour"
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors"
+            <a
+              href="/plan-tour"
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-lg font-bold tracking-wide"
             >
-              <FaMapMarkedAlt className="mr-2" />
-              Create New Plan
-            </Link>
+              + Plan a New Tour
+            </a>
           </div>
         </motion.div>
 
@@ -199,178 +208,73 @@ const Dashboard = () => {
 
         {!loading && !error && (
           <>
-            {/* Navigation Tabs */}
-            <div className="mb-8 border-b border-gray-200">
-              <nav className="flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('dashboard')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === 'dashboard' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                >
-                  <RiDashboardFill className="mr-2" />
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setActiveTab('saved')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === 'saved' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                >
-                  <FaHeart className="mr-2" />
-                  Saved Tours
-                </button>
-                <button
-                  onClick={() => setActiveTab('history')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                >
-                  <FaHistory className="mr-2" />
-                  Trip History
-                </button>
-              </nav>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+              <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-gray-500 text-sm font-medium">Saved Tours</h3>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{stats.savedTours}</p>
+                </div>
+                <FaHeart className="text-blue-500 text-4xl opacity-70" />
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-gray-500 text-sm font-medium">Upcoming Tours</h3>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{stats.upcomingTours}</p>
+                </div>
+                <FaCalendarAlt className="text-orange-500 text-4xl opacity-70" />
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-gray-500 text-sm font-medium">Completed Tours</h3>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{stats.completedTours}</p>
+                </div>
+                <FaCheckCircle className="text-green-500 text-4xl opacity-70" />
+              </div>
             </div>
 
-            {/* Dashboard Content */}
-            <AnimatePresence mode="wait">
-              {activeTab === 'dashboard' && (
-                <motion.div
-                  key="dashboard-content"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                >
-                  {/* Stats Cards */}
-                  <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-gray-500 text-sm font-medium">Saved Tours</h3>
-                      <p className="text-3xl font-bold text-gray-900 mt-1">{stats.savedTours}</p>
+            {/* Your Profile Card */}
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <span role="img" aria-label="profile">👤</span> Your Profile
+              </h2>
+              {loadingUsers ? (
+                <div>Loading your profile...</div>
+              ) : userError ? (
+                <div className="text-red-500">{userError}</div>
+              ) : (
+                users.filter(u => u.email === user?.email).map(user => (
+                  <div key={user._id} className="max-w-xl mx-auto bg-white rounded-3xl shadow-2xl p-10 flex flex-col items-center gap-4 border border-blue-100">
+                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 flex items-center justify-center text-6xl text-blue-700 mb-2 shadow-lg">
+                      {user.name ? user.name[0].toUpperCase() : <span role='img' aria-label='profile'>👤</span>}
                     </div>
-                    <FaHeart className="text-blue-500 text-4xl opacity-70" />
-                  </div>
-                  <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-gray-500 text-sm font-medium">Completed Tours</h3>
-                      <p className="text-3xl font-bold text-gray-900 mt-1">{stats.completedTours}</p>
-                    </div>
-                    <FaCheckCircle className="text-green-500 text-4xl opacity-70" />
-                  </div>
-                  <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-gray-500 text-sm font-medium">Upcoming Tours</h3>
-                      <p className="text-3xl font-bold text-gray-900 mt-1">{stats.upcomingTours}</p>
-                    </div>
-                    <FaCalendarAlt className="text-orange-500 text-4xl opacity-70" />
-                  </div>
-
-                  {/* Recent Activities */}
-                  <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                      <FiActivity className="mr-2 text-blue-600" /> Recent Activities
-                    </h2>
-                    {recentActivities.length > 0 ? (
-                      <ul className="space-y-4">
-                        {recentActivities.map(activity => (
-                          <li key={activity.id} className="flex items-center justify-between border-b pb-3 last:pb-0 last:border-b-0">
-                            <div>
-                              <p className="font-medium text-gray-900">{activity.title}</p>
-                              <p className="text-sm text-gray-500 flex items-center mt-1">
-                                <FaMapMarkedAlt className="mr-1" /> {activity.location}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {activity.date}
-                              </p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {activity.rating && (
-                                <div className="flex items-center text-yellow-500">
-                                  {renderStars(activity.rating)}
-                                </div>
-                              )}
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                activity.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                              }`}>
-                                {activity.status}
-                              </span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No recent activities yet.</p>
-                    )}
-                  </div>
-
-                  {/* Recommended Tours (Places) */}
-                  <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-3">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                      <FaMapMarkedAlt className="mr-2 text-blue-600" /> Recommended for You
-                    </h2>
-                    {filteredTours.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {filteredTours.map((tour) => (
-                          <div key={tour.id} className="relative bg-gray-50 rounded-lg shadow-sm overflow-hidden group">
-                            <img 
-                              src={tour.image} 
-                              alt={tour.title} 
-                              className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300" 
-                              onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'; }}
-                            />
-                            <div className="p-4">
-                              <h3 className="font-semibold text-gray-900 text-lg mb-1">{tour.title}</h3>
-                              <p className="text-sm text-gray-600 flex items-center"><FaMapMarkedAlt className="mr-1" /> {tour.location}</p>
-                              <div className="flex items-center text-gray-500 text-sm mt-2">
-                                <FaClock className="mr-1" /> {tour.duration}
-                              </div>
-                              <div className="flex items-center text-yellow-500 text-sm mt-1">
-                                {renderStars(tour.rating)}
-                                <span className="ml-1 text-gray-600 text-xs">({tour.rating})</span>
-                              </div>
-                              <div className="mt-3 flex justify-between items-center">
-                                <span className="text-blue-600 font-bold text-lg">₹{tour.price}</span>
-                                <button
-                                  onClick={() => toggleSaveTour(tour.id)}
-                                  className={`p-2 rounded-full transition-colors ${tour.saved ? 'bg-red-100 text-red-500' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-                                >
-                                  <FaHeart />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="text-center">
+                      <h3 className="text-3xl font-extrabold text-gray-900 mb-1" style={{ fontFamily: 'Poppins, Inter, Arial, sans-serif' }}>{user.name}</h3>
+                      <p className="text-lg text-gray-600 mb-1">{user.email}</p>
+                      <div className="flex flex-wrap justify-center gap-2 mb-2">
+                        {Array.isArray(user.preferences) && user.preferences.length > 0 ? (
+                          user.preferences.map((pref, idx) => (
+                            <span key={idx} className="bg-blue-50 text-blue-700 px-4 py-1 rounded-full text-sm font-semibold border border-blue-200 shadow-sm">
+                              {pref}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-400">No preferences set</span>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No recommendations available.</p>
-                    )}
+                    </div>
                   </div>
-                </motion.div>
+                ))
               )}
+            </div>
 
-              {activeTab === 'saved' && (
-                <motion.div
-                  key="saved-content"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-lg shadow-md p-6"
-                >
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Your Saved Tours</h2>
-                  <p className="text-gray-600">Content for saved tours will go here. (From plans backend)</p>
-                </motion.div>
-              )}
-
-              {activeTab === 'history' && (
-                <motion.div
-                  key="history-content"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-lg shadow-md p-6"
-                >
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Trip History</h2>
-                  <p className="text-gray-600">Content for trip history will go here. (From plans backend)</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Project Aim Section (moved to bottom) */}
+            <div className="bg-white/90 rounded-3xl shadow-2xl p-8 mt-16 mb-8 border border-blue-200 flex flex-col items-center text-center" style={{backdropFilter: 'blur(2px)'}}>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-indigo-700 mb-4 tracking-tight" style={{ fontFamily: 'Poppins, Inter, Arial, sans-serif' }}>What This Project Aims to Solve</h2>
+              <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
+                <span className="font-semibold text-blue-700">TourRec</span> is designed to make travel planning effortless and personalized. It recommends the best places to visit based on your preferences and location, optimizes your trip route, and helps you save and manage your tour plans. The goal is to save you time, reduce travel stress, and ensure you have the most enjoyable and efficient travel experience possible.
+              </p>
+            </div>
           </>
         )}
       </div>

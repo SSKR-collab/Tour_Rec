@@ -45,8 +45,7 @@ export function AuthProvider({ children }) {
     checkUserSession();
   }, []); // Empty dependency array: runs only once on mount
 
-  const login = (userData, token, rememberMe) => {
-    setUser(userData);
+  const login = async (userData, token, rememberMe) => {
     if (token) {
       if (rememberMe) {
         localStorage.setItem('token', token);
@@ -55,7 +54,22 @@ export function AuthProvider({ children }) {
         sessionStorage.setItem('token', token);
         console.log("AuthContext: Token saved to sessionStorage.");
       }
+      try {
+        const response = await axios.get('http://localhost:5002/api/auth/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUser(response.data);
+        console.log("AuthContext: User profile fetched after login:", response.data.email, "Preferences:", response.data.preferences);
+        return;
+      } catch (error) {
+        setUser(userData); // fallback
+        console.error("AuthContext: Failed to fetch user profile after login:", error.message);
+        return;
+      }
     }
+    setUser(userData);
   };
 
   const logout = () => {

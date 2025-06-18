@@ -1,6 +1,7 @@
 // controllers/tourPlanController.js
 import Plan from "../models/Plan.js";
 import { googleOptimize, fallbackOptimize } from "../services/routeOptimizerService.js";
+import { haversine } from "../utils/tspGreedy.js";
 
 /* ─────────────────────────────────────────────────────────────── */
 /* 1. Create an optimised day plan                                 */

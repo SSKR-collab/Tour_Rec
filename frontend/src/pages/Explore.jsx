@@ -21,9 +21,7 @@ const filterTypeMap = {
   'zoo': ['zoo'],
   'park': ['park'],
   'temple': ['church', 'hindu_temple', 'mosque', 'synagogue', 'place_of_worship'],
-  'hotel': ['lodging'],
   'museum': ['museum'],
-  'shopping': ['shopping_mall', 'store', 'supermarket', 'department_store'],
   'monument': ['tourist_attraction', 'point_of_interest', 'landmark'],
 };
 
@@ -114,31 +112,8 @@ const Explore = () => {
         },
         options
       );
-
-      // Add a watch position to keep updating location
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          console.log("Updated geolocation data:", position);
-          const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          console.log("Updating location to:", newLocation);
-          setCurrentLatLng(newLocation);
-          setLocationAccuracy(position.coords.accuracy);
-        },
-        (err) => {
-          console.error("Watch position error:", err);
-        },
-        options
-      );
-
-      // Cleanup watch position on component unmount
-      return () => {
-        if (watchId) {
-          navigator.geolocation.clearWatch(watchId);
-        }
-      };
+      // No watchPosition, so no cleanup needed
+      return undefined;
     } else {
       console.warn("Geolocation is not supported by your browser.");
       const errorMessage = "Geolocation is not supported by your browser. Showing attractions around a default city (e.g., Delhi).";
@@ -402,22 +377,10 @@ const Explore = () => {
           <FiFilter className="mr-2" /> Temples
         </button>
         <button
-          onClick={() => setActiveFilter('hotel')}
-          className={`px-4 py-2 rounded-full flex items-center ${activeFilter === 'hotel' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
-        >
-          <FiFilter className="mr-2" /> Hotels
-        </button>
-        <button
           onClick={() => setActiveFilter('museum')}
           className={`px-4 py-2 rounded-full flex items-center ${activeFilter === 'museum' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
         >
           <FiFilter className="mr-2" /> Museums
-        </button>
-        <button
-          onClick={() => setActiveFilter('shopping')}
-          className={`px-4 py-2 rounded-full flex items-center ${activeFilter === 'shopping' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
-        >
-          <FiFilter className="mr-2" /> Shopping
         </button>
         <button
           onClick={() => setActiveFilter('monument')}

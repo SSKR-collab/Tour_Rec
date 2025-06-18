@@ -9,9 +9,10 @@ import LoadingOverlay from "../components/LoadingOverlay";
 import ErrorModal from "../components/ErrorModal";
 import { useNavigate } from 'react-router-dom';
 import { optimizeTourRoute } from '../api/planner'; // Make sure this exists
+import { saveUserPreferences } from '../api/userProfile';
 
 const Preference = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [currentLocation, setCurrentLocation] = useState(null);
   const [optimizedRoute, setOptimizedRoute] = useState(null);
@@ -46,6 +47,15 @@ const Preference = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (user && user.preferences) {
+      setPreferences(prev => ({
+        ...prev,
+        interests: user.preferences
+      }));
+    }
+  }, [user]);
+
   // Mutation for optimizing route
   const { mutate: optimizeRoute, isLoading } = useMutation({
     mutationFn: optimizeTourRoute,
@@ -74,6 +84,24 @@ const Preference = () => {
     });
   };
 
+  const handleSavePreferences = async () => {
+    try {
+      await saveUserPreferences(user.id, preferences.interests);
+      // Update user context
+      updateUser({ ...user, preferences: preferences.interests });
+      alert('Preferences saved successfully!');
+    } catch (err) {
+      setError(err.message || 'Failed to save preferences');
+    }
+  };
+
+  const handleResetPreferences = () => {
+    setPreferences(prev => ({
+      ...prev,
+      interests: []
+    }));
+  };
+
   const handleSubmit = useCallback(() => {
     if (!currentLocation) {
       setError('Please enable location services');
@@ -99,7 +127,7 @@ const Preference = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 pt-20">
+    <div className="min-h-screen bg-gray-100 pt-20 px-0 sm:px-4 flex items-start justify-center w-full">
       {isLoading && <LoadingOverlay />}
       {error && (
         <ErrorModal 
@@ -108,43 +136,17 @@ const Preference = () => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <PreferenceForm 
-              preferences={preferences}
-              onChange={handlePreferenceChange}
-              onInterestToggle={handleInterestToggle}
-              onSubmit={handleSubmit}
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div className="lg:col-span-2 space-y-6">
-            {optimizedRoute ? (
-              <>
-                <MapView 
-                  route={optimizedRoute} 
-                  places={places}
-                  currentLocation={currentLocation}
-                />
-                <Itinerary 
-                  route={optimizedRoute}
-                  places={places}
-                  onSave={savePlan}
-                />
-              </>
-            ) : (
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                  Your optimized tour will appear here
-                </h2>
-                <p className="text-gray-600">
-                  Set your preferences and click "Generate Route" to create your perfect tour.
-                </p>
-              </div>
-            )}
-          </div>
+      <div className="w-full px-0 sm:px-8 py-8 flex flex-col items-center">
+        <div className="w-full">
+          <PreferenceForm 
+            preferences={preferences}
+            onChange={handlePreferenceChange}
+            onInterestToggle={handleInterestToggle}
+            onSubmit={handleSavePreferences}
+            onReset={handleResetPreferences}
+            disabled={isLoading}
+            fullWidth
+          />
         </div>
       </div>
     </div>

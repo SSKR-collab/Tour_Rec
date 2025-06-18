@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from './axios';
 
-const API_URL = 'http://localhost:5002/api';
+const API_URL = '/directions';
 
 export const getDirections = async (originLat, originLng, destinationLat, destinationLng) => {
   try {
@@ -9,7 +9,7 @@ export const getDirections = async (originLat, originLng, destinationLat, destin
       throw new Error('No authentication token found.');
     }
 
-    const response = await axios.get(`${API_URL}/directions/directions`, {
+    const response = await axios.get(`${API_URL}/directions`, {
       params: {
         originLat,
         originLng,
