@@ -1,8 +1,8 @@
 import Plan from "../models/plan.js";
 import Place from "../models/place.js";
-import User from "../models/user.js";
+import User from "../models/User.js";
 import similarity from "../utils/similarity.js";
-import { seedPlacesAround } from "./seedHelper.js";
+import { seedPlaces } from "./seedHelper.js";
 // Haversine distance in km
 const haversine = (loc1, loc2) => {
 	const R = 6371;
@@ -15,6 +15,45 @@ const haversine = (loc1, loc2) => {
 	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+// Helper to expand cinema-related types
+const expandPreferenceTypes = (prefs) => {
+	const expanded = new Set();
+	prefs.forEach((p) => {
+		if (p === 'cinema') {
+			[
+				'movie_theater',
+				'theatre',
+				'theater',
+				'multiplex',
+				'cinema',
+				'plex',
+				'movies',
+				'film',
+				'screen',
+				'show',
+				'hall',
+			].forEach((t) => expanded.add(t));
+		} else if (p === 'temple') {
+			[
+				'temple', 'hindu_temple', 'church', 'mosque', 'synagogue', 'place_of_worship',
+				'mandir', 'gurudwara', 'math', 'ashram', 'spiritual', 'retreat', 'meditation',
+			].forEach((t) => expanded.add(t));
+		} else {
+			expanded.add(p);
+		}
+	});
+	return Array.from(expanded);
+};
+
+// Helper to check if place matches preferences by type or name
+const matchesPreference = (place, expandedPrefs) => {
+	// Check types
+	if (place.types && expandedPrefs.some(pref => place.types.includes(pref))) return true;
+	// Check name (case-insensitive, subword match)
+	const name = (place.name || '').toLowerCase();
+	return expandedPrefs.some(pref => name.includes(pref.toLowerCase()));
+};
+
 /**
  *  hybridRecommend(userId, limit)
  * Collaborative + Content-Based Recommender (global, not location-aware)
@@ -24,10 +63,10 @@ export const hybridRecommend = async (userId, limit = 5) => {
 	if (!user) throw new Error("User not found");
 
 	// const preferences = user.preferences || {};
-	const placeTypesPref = user.preferences || [];
+	const placeTypesPref = expandPreferenceTypes(user.preferences || []);
 
 	// Build user → place matrix
-	const plans = await Plan.find().populate("selectedPlaces.place", "placeId");
+	const plans = await Plan.find();
 	const userVisits = {};
 	const allPlaceIds = new Set();
 	// console.log(plans);
@@ -84,9 +123,11 @@ export const hybridRecommend = async (userId, limit = 5) => {
 	}
 
 	return [...finalScores.values()]
-		.sort((a, b) => b.score - a.score)
-		.slice(0, limit)
-		.map((p) => p.place);
+		.map((p) => p.place)
+		.filter((place) =>
+			placeTypesPref.length === 0 || matchesPreference(place, placeTypesPref)
+		)
+		.slice(0, limit);
 };
 
 /**
@@ -103,10 +144,10 @@ export const hybridRecommendWithLocation = async ({
 	const user = await User.findById(userId);
 	if (!user) throw new Error("User not found");
 
-	const placeTypesPref = user.preferences || [];
+	const placeTypesPref = expandPreferenceTypes(user.preferences || []);
 
 	/* ---------------- CF PREP ---------------- */
-	const plans = await Plan.find().populate("selectedPlaces.place", "placeId");
+	const plans = await Plan.find();
 	const userVisits = {};
 	const allPlaceIds = new Set();
 
@@ -141,33 +182,51 @@ export const hybridRecommendWithLocation = async ({
 	const cbScores = new Map();
 	const location = { lat, lng };
 
-	// ❗ make mutable
-	let nearbyPlaces = placeDocs.filter((p) => haversine(location, p.location) <= radius);
+	// Convert radius from meters to kilometers
+	const radiusKm = radius / 1000;
 
+	let nearbyPlaces = placeDocs.filter((p) => {
+		if (!p.location || !p.placeId) {
+			console.error('Skipping place with missing location or placeId:', p);
+			return false;
+		}
+		return haversine(location, p.location) <= radiusKm;
+	});
+
+	console.log('Nearby places count:', nearbyPlaces.length, 'for radius', radiusKm, 'km');
+
+	// If no places found, try to seed new places
 	if (nearbyPlaces.length === 0) {
 		console.log("🌍 Auto‑seeding new city from Geoapify…");
+		// Check for Google API key
+		if (!process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY === "no") {
+			throw new Error("Google Maps API key is missing. Cannot seed new places.");
+		}
 		try {
-			const seeded = await seedPlacesAround({
+			const seeded = await seedPlaces({
 				lat,
 				lng,
 				city: user.location?.city || "Unknown",
+				preferences: user.preferences || [],
 			});
-			if (seeded.length > 0) {
-				nearbyPlaces = seeded; // ← works now (let, not const)
+			if (Array.isArray(seeded) && seeded.length > 0) {
+				nearbyPlaces = seeded;
 			} else {
-				console.warn("⚠️ No places found via Geoapify.");
+				throw new Error("No places found via seeding. Please try a different location or check your API key.");
 			}
 		} catch (error) {
-			console.error("❌ Auto‑seed failed:", error.message);
+			throw new Error(`Auto-seed failed: ${error.message}`);
 		}
 	}
 
 	for (const place of nearbyPlaces) {
-		let score = 0;
-		if (placeTypesPref.length && place.types) {
-			const match = place.types.filter((t) => placeTypesPref.includes(t));
-			score = match.length / placeTypesPref.length;
+		if (!place.placeId || !place.types) {
+			console.error('Skipping place in scoring with missing placeId or types:', place);
+			continue;
 		}
+		let score = 0;
+		const match = place.types.filter((t) => placeTypesPref.includes(t));
+		score = match.length / placeTypesPref.length;
 		cbScores.set(place.placeId, score);
 	}
 
@@ -178,6 +237,7 @@ export const hybridRecommendWithLocation = async ({
 	const weightCB = hasHistory ? 0.3 : 1; // rely fully on CB if no history
 
 	for (const place of nearbyPlaces) {
+		if (!place.placeId) continue;
 		const pid = place.placeId;
 		const cf = cfScores.get(pid) || 0;
 		const cb = cbScores.get(pid) || 0;
@@ -185,7 +245,6 @@ export const hybridRecommendWithLocation = async ({
 		if (score > 0) finalScores.set(pid, { score, place });
 	}
 
-	/* ---------------- Fallback if still empty -------- */
 	let ranked =
 		finalScores.size > 0
 			? [...finalScores.values()].sort((a, b) => b.score - a.score)
@@ -193,5 +252,14 @@ export const hybridRecommendWithLocation = async ({
 					.map((p) => ({ place: p, rating: p.rating || 0 }))
 					.sort((a, b) => b.rating - a.rating);
 
-	return ranked.slice(0, limit).map((x) => x.place);
+	let filteredRanked =
+		ranked
+			.map((x) => x.place)
+			.filter((place) => place && place.placeId && place.types && (placeTypesPref.length === 0 || matchesPreference(place, placeTypesPref)));
+
+	if (filteredRanked.length === 0) {
+		throw new Error("No recommended places found for this area. Try expanding your search radius or check your preferences/API key.");
+	}
+
+	return filteredRanked.slice(0, limit);
 };

@@ -1,6 +1,15 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+
+// Debug logging
+console.log('Environment variables loaded:');
+console.log('GOOGLE_MAPS_API_KEY:', GOOGLE_PLACES_API_KEY ? `${GOOGLE_PLACES_API_KEY.substring(0, 10)}...` : 'Not found');
+console.log('NODE_ENV:', process.env.NODE_ENV);
 
 // Helper to calculate distance between two lat/lng points in kilometers (Haversine formula)
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
@@ -150,21 +159,42 @@ export const getNearbyPlaces = async (req, res) => {
             params.pagetoken = page_token;
         }
 
-        const response = await axios.get(
-            `https://maps.googleapis.com/maps/api/place/nearbysearch/json`,
-            { params }
-        );
+        // Log the full request URL (with masked key for security)
+        const requestUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${new URLSearchParams(params).toString()}`;
+        console.log('Full request URL:', requestUrl.replace(GOOGLE_PLACES_API_KEY, 'API_KEY'));
 
-        console.log(`Backend: Google Places API raw response status (page ${fetchedPages + 1}):`, response.data.status);
-        if (response.data.error_message) {
-            console.error(`Backend: Google Places API error message (page ${fetchedPages + 1}):`, response.data.error_message);
+        try {
+            const response = await axios.get(
+                `https://maps.googleapis.com/maps/api/place/nearbysearch/json`,
+                { params }
+            );
+
+            console.log(`Backend: Google Places API raw response status (page ${fetchedPages + 1}):`, response.data.status);
+            if (response.data.error_message) {
+                console.error(`Backend: Google Places API error message (page ${fetchedPages + 1}):`, response.data.error_message);
+            }
+            if (response.data.status === 'REQUEST_DENIED') {
+                console.error('API Key details:', {
+                    keyLength: GOOGLE_PLACES_API_KEY?.length,
+                    keyPrefix: GOOGLE_PLACES_API_KEY?.substring(0, 10),
+                    isKeyPresent: !!GOOGLE_PLACES_API_KEY
+                });
+            }
+            console.log(`Backend: Raw Google Places API results (page ${fetchedPages + 1}):`, JSON.stringify(response.data.results, null, 2));
+
+            return { 
+                results: response.data.results || [],
+                next_page_token: response.data.next_page_token || null
+            };
+        } catch (error) {
+            console.error('API Request Error:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers
+            });
+            throw error;
         }
-        console.log(`Backend: Raw Google Places API results (page ${fetchedPages + 1}):`, JSON.stringify(response.data.results, null, 2)); // Re-enabled raw results log
-
-        return { 
-            results: response.data.results || [],
-            next_page_token: response.data.next_page_token || null
-        };
     };
 
     try {

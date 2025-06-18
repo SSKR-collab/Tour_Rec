@@ -1,17 +1,26 @@
 import { hybridRecommend, hybridRecommendWithLocation } from "../services/cfService.js";
-import User from "../models/user.js";
+import User from "../models/User.js";
 
 // GET /api/recommend/hybrid
 export const getHybridRecommendations = async (req, res) => {
 	const limit = parseInt(req.query.limit) || 5;
 
 	try {
+		console.log('Hybrid recommendation request for user:', req.user?.userId);
+		const user = await User.findById(req.user.userId);
+		if (!user) {
+			console.error('User not found:', req.user.userId);
+			return res.status(404).json({ message: 'User not found' });
+		}
 		const recommended = await hybridRecommend(req.user.userId, limit);
+		console.log('Recommended places:', recommended);
 		res.json({ recommended });
 	} catch (err) {
+		console.error('Hybrid recommendation failed:', err);
 		res.status(500).json({
 			message: "Hybrid recommendation failed",
 			error: err.message,
+			stack: err.stack,
 		});
 	}
 };

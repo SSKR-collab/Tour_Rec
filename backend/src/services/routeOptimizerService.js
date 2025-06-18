@@ -27,3 +27,15 @@ export const fallbackOptimize = (origin, places) => {
 	}
 	return { reordered: sorted, travelSec };
 };
+
+// Calculate travel time for a fixed order (non-optimized)
+export const travelTimeForOrder = (origin, places) => {
+	const travelSec = [];
+	let prev = origin.location || origin; // Handle both {location: {lat, lng}} and {lat, lng} formats
+	for (const p of places) {
+		const km = haversine(prev, p.location);
+		travelSec.push(Math.round((km / 40) * 3600 * 1.1));
+		prev = p.location;
+	}
+	return { reordered: places, travelSec };
+};

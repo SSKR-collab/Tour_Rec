@@ -61,49 +61,9 @@ function isRelevantTouristPlace(place) {
 
 	// Special handling for movie theaters/cinemas
 	if (types.includes("movie_theater")) {
-		// Exclude photo studios and other non-cinema places
-		const cinemaExclusions = [
-			"photo",
-			"studio",
-			"photography",
-			"camera",
-			"portrait",
-			"wedding",
-			"event",
-			"video",
-			"recording",
-			"production",
-			"advertising",
-			"commercial",
-			"digital",
-			"print",
-			"graphics",
-		];
-
-		// Must contain cinema-related keywords
-		const cinemaKeywords = [
-			"cinema",
-			"theatre",
-			"theater",
-			"plex",
-			"multiplex",
-			"movies",
-			"film",
-			"screen",
-			"show",
-			"hall",
-		];
-
-		// Exclude if name contains any exclusion keywords
-		if (cinemaExclusions.some((keyword) => name.includes(keyword))) return false;
-
-		// Must contain at least one cinema-related keyword
-		if (!cinemaKeywords.some((keyword) => name.includes(keyword))) return false;
-
-		// Relaxed criteria for cinemas
+		// Accept any movie_theater with a reasonable rating and user ratings
 		return (
-			(place.rating >= 3.5 && place.user_ratings_total >= 20) ||
-			(place.rating >= 4.0 && place.user_ratings_total >= 10)
+			(place.rating >= 3.5 && place.user_ratings_total >= 10)
 		);
 	}
 
@@ -354,8 +314,8 @@ function isRelevantTouristPlace(place) {
 	// Stricter criteria for historical places
 	if (isHistorical) {
 		return (
-			(place.rating >= 4.0 && place.user_ratings_total >= 75) ||
-			(place.rating >= 4.3 && place.user_ratings_total >= 40)
+			(place.rating >= 4.0 && place.user_ratings_total >= 50) ||
+			(place.rating >= 4.3 && place.user_ratings_total >= 30)
 		);
 	}
 
@@ -370,8 +330,8 @@ function isRelevantTouristPlace(place) {
 	// Moderate criteria for parks
 	if (isPark) {
 		return (
-			(place.rating >= 4.0 && place.user_ratings_total >= 50) ||
-			(place.rating >= 4.2 && place.user_ratings_total >= 30)
+			(place.rating >= 4.0 && place.user_ratings_total >= 30) ||
+			(place.rating >= 4.2 && place.user_ratings_total >= 20)
 		);
 	}
 
@@ -384,7 +344,7 @@ import Place from "../models/place.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || "AIzaSyDeL26THVRr605z_TbWT3vhqkj_97AUzTs";
+const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "no";
 
 const CANDIDATE_TYPES = [
 	"tourist_attraction",
@@ -411,6 +371,8 @@ const nearbySearch = async ({ lat, lng, type, radius = 8000 }) => {
 	try {
 		const location = `${lat},${lng}`;
 		console.log("📡 Calling Google API with:", { location, type });
+		console.log("GOOGLE_API_KEY:", GOOGLE_API_KEY);
+		console.log("Requesting nearbysearch with params:", { location, radius, type, key: GOOGLE_API_KEY });
 
 		const res = await axios.get(
 			"https://maps.googleapis.com/maps/api/place/nearbysearch/json",
@@ -423,6 +385,11 @@ const nearbySearch = async ({ lat, lng, type, radius = 8000 }) => {
 				},
 			}
 		);
+
+		console.log("Google Places API response status:", res.data.status);
+		if (res.data.error_message) {
+			console.error("Google Places API error message:", res.data.error_message);
+		}
 
 		if (res.data.status !== "OK") {
 			console.error("Nearby Search failed:", res.data.status);

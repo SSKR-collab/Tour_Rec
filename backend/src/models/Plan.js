@@ -15,7 +15,12 @@ const PlanSchema = new mongoose.Schema(
 		],
 		totalTime: Number, // minutes
 		isSorted: Boolean,
+		summary: String,
+		savedLocation: {
+			state: String,
+			city: String
+		},
 	},
 	{ timestamps: true }
 );
-export default mongoose.model("Plan", PlanSchema);
+export default mongoose.models.Plan || mongoose.model("Plan", PlanSchema);

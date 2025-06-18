@@ -20,7 +20,7 @@ const haversine = (a, b) => {
  */
 export const sortPlacesTSP = async (sourceLocation, selectedPlaces) => {
 	const places = await Place.find({
-		_id: { $in: selectedPlaces.map((p) => p.place) },
+		placeId: { $in: selectedPlaces.map((p) => p.place) },
 	});
 
 	const unvisited = [...selectedPlaces];
@@ -33,7 +33,7 @@ export const sortPlacesTSP = async (sourceLocation, selectedPlaces) => {
 		let nearestDist = Infinity;
 
 		for (let i = 0; i < unvisited.length; i++) {
-			const place = places.find((p) => p._id.equals(unvisited[i].place));
+			const place = places.find((p) => p.placeId === unvisited[i].place);
 			if (!place) continue;
 			const dist = haversine(current, place.location);
 			if (dist < nearestDist) {
@@ -43,7 +43,7 @@ export const sortPlacesTSP = async (sourceLocation, selectedPlaces) => {
 		}
 
 		sorted.push(unvisited[nearestIndex]);
-		const nextPlace = places.find((p) => p._id.equals(unvisited[nearestIndex].place));
+		const nextPlace = places.find((p) => p.placeId === unvisited[nearestIndex].place);
 		current = nextPlace.location;
 		unvisited.splice(nearestIndex, 1);
 	}
