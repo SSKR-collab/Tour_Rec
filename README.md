@@ -4,6 +4,8 @@ A smart travel app that helps you discover amazing places, plan perfect trips, a
 
 ## Getting Started
 
+### demo video = https://drive.google.com/file/d/1i6Euy4NMozPXaR1ciFUgKCQQ7t6Rm05I/view?usp=sharing
+
 ### What You'll Need
 
 Before you start, make sure you have these installed:
