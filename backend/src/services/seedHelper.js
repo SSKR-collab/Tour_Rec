@@ -371,8 +371,7 @@ const nearbySearch = async ({ lat, lng, type, radius = 8000 }) => {
 	try {
 		const location = `${lat},${lng}`;
 		console.log("📡 Calling Google API with:", { location, type });
-		console.log("GOOGLE_API_KEY:", GOOGLE_API_KEY);
-		console.log("Requesting nearbysearch with params:", { location, radius, type, key: GOOGLE_API_KEY });
+		console.log("Requesting nearbysearch with params:", { location, radius, type });
 
 		const res = await axios.get(
 			"https://maps.googleapis.com/maps/api/place/nearbysearch/json",

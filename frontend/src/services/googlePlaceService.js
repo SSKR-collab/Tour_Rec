@@ -6,9 +6,6 @@ const KEY = process.env.GOOGLE_MAPS_API_KEY;
 const DETAILS = "https://maps.googleapis.com/maps/api/place/details/json";
 const PHOTO = "https://maps.googleapis.com/maps/api/place/photo";
 
-// Debug log for API key
-console.log("API Key loaded:", KEY ? `${KEY.substring(0, 10)}...` : "Not found");
-
 export const fetchPlace = async (placeId) => {
 	try {
 		let doc = await Place.findOne({ placeId }).lean();
@@ -19,10 +16,6 @@ export const fetchPlace = async (placeId) => {
 
 		console.log(`Fetching details for place ${placeId}...`);
 		const url = `${DETAILS}?place_id=${placeId}&fields=place_id,name,geometry,formatted_address,rating,types,photos&key=${KEY}`;
-
-		// Log the actual URL being used (with masked key for security)
-		console.log("Request URL:", url.replace(KEY, "API_KEY"));
-		console.log("API Key being used:", KEY ? `${KEY.substring(0, 10)}...` : "Not found");
 
 		const { data } = await axios.get(url);
 

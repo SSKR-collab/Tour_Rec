@@ -7,8 +7,7 @@ dotenv.config();
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 // Debug logging
-console.log('Environment variables loaded:');
-console.log('GOOGLE_MAPS_API_KEY:', GOOGLE_PLACES_API_KEY ? `${GOOGLE_PLACES_API_KEY.substring(0, 10)}...` : 'Not found');
+console.log('Environment variables loaded');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 
 // Helper to calculate distance between two lat/lng points in kilometers (Haversine formula)
@@ -84,8 +83,6 @@ export const getNearbyPlaces = async (req, res) => {
     const userLat = parseFloat(latitude);
     const userLng = parseFloat(longitude);
     console.log(`Backend: Parsed User Location - Lat: ${userLat}, Lng: ${userLng}`);
-
-    console.log("Backend: PlacesController - GOOGLE_PLACES_API_KEY value:", GOOGLE_PLACES_API_KEY);
 
     if (!GOOGLE_PLACES_API_KEY) {
         console.error('Google Places API Key is not set in environment variables.');
@@ -174,11 +171,7 @@ export const getNearbyPlaces = async (req, res) => {
                 console.error(`Backend: Google Places API error message (page ${fetchedPages + 1}):`, response.data.error_message);
             }
             if (response.data.status === 'REQUEST_DENIED') {
-                console.error('API Key details:', {
-                    keyLength: GOOGLE_PLACES_API_KEY?.length,
-                    keyPrefix: GOOGLE_PLACES_API_KEY?.substring(0, 10),
-                    isKeyPresent: !!GOOGLE_PLACES_API_KEY
-                });
+                console.error('API Key validation failed. Please check your Google API configuration.');
             }
             console.log(`Backend: Raw Google Places API results (page ${fetchedPages + 1}):`, JSON.stringify(response.data.results, null, 2));
 
