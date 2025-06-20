@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Tour Recommendation System Web Application
 
 ## Project Overview
@@ -332,4 +332,3 @@ If you run into any issues:
 ---
 
 **Happy Travel Planning! 🗺️✈️** 
->>>>>>> 015e7983048c10210ca9d81edff065e83e5f749e
