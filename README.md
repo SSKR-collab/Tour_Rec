@@ -1,104 +1,82 @@
-# Tour Recommendation System
+# Tour Recommendation System Web Application
 
-## Overview
-The Tour Recommendation System is a full-stack web application designed to help users plan, optimize, and save personalized travel itineraries. By leveraging user preferences, collaborative filtering, and geolocation, the system recommends places to visit, optimizes travel routes, and allows users to save and manage their tour plans.
+## Project Overview
+Tour Recommendation System is a full-stack web application that helps users discover, plan, and manage personalized tours based on their preferences. Users can register, log in (including with Google), set their travel preferences, explore destinations, and generate optimized tour plans.
 
-## Problem Statement
-**Travelers often struggle to plan efficient, enjoyable, and personalized tours, especially in unfamiliar cities.**
-- They waste time researching places, distances, and optimal routes.
-- Manual planning is tedious and often leads to suboptimal experiences.
-- There is no easy way to save, revisit, or share personalized itineraries.
-
-## Why This Problem Matters
-- **Time and Experience:** Poor planning leads to wasted time, missed attractions, and less enjoyable trips.
-- **Personalization:** Generic recommendations do not account for individual interests, travel style, or constraints.
-- **Convenience:** Modern travelers expect seamless, tech-driven solutions for trip planning and management.
-
-## Solution
-This project provides:
-- **Personalized recommendations** based on user preferences, collaborative filtering, and location.
-- **Route optimization** to minimize travel time and maximize experience.
-- **Tour saving and management** so users can revisit, edit, or delete their plans.
-- **User-friendly dashboard** for insights and quick access to saved tours.
+## Features
+- User registration and authentication (including Google OAuth)
+- Personalized tour recommendations
+- Explore and search for destinations
+- Save and manage tour plans
+- Interactive map integration
+- User profile and preferences management
 
 ## Tech Stack
-- **Frontend:** React.js, Tailwind CSS, React Router, Context API
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB (Mongoose ODM)
-- **Authentication:** JWT (JSON Web Tokens), OAuth (Google, Facebook)
-- **APIs & Services:**
-  - Google Maps & Places API (for geolocation, place details, and route optimization)
-  - Custom collaborative filtering and recommendation algorithms
-- **Other:**
-  - Framer Motion (animations)
-  - ESLint, Prettier (code quality)
+- **Frontend:** React, React Router, Context API, Tailwind CSS
+- **Backend:** Node.js, Express.js, MongoDB, Mongoose
+- **APIs:** Google Maps, Google Places
+- **Authentication:** JWT, Google OAuth
 
-## Key Features
-- **User Registration & Login:** Secure authentication with JWT and OAuth.
-- **Personalized Recommendations:** Suggests places based on user profile, preferences, and collaborative filtering.
-- **Route Optimization:** Uses TSP (Traveling Salesman Problem) algorithms and Google Maps API to optimize tour routes.
-- **Tour Planning:** Users can select places, view estimated travel and stay times, and generate a complete itinerary.
-- **Save & Manage Tours:** Save planned tours, view them on the Saved Tours page, and delete or update as needed.
-- **Dashboard:** Visualizes user stats, recent activities, and recommended tours.
-- **Admin/Analytics (optional):** View all users and their preferences (for future expansion).
+## Setup Instructions
 
-## Architecture
-```
-Frontend (React)
-  |---> API Calls (REST)
-Backend (Node.js/Express)
-  |---> MongoDB (Mongoose)
-  |---> Google Maps/Places API
-  |---> Recommendation & Optimization Services
+### 1. Clone the Repository
+```bash
+git clone <repo-url>
+cd tour-recommendation-system
 ```
 
-## How to Run
-1. **Clone the repository:**
-   ```bash
-   git clone <repo-url>
-   cd tour-recommendation-system
-   ```
-2. **Backend Setup:**
-   - Go to the backend folder:
-     ```bash
-     cd backend
-     npm install
-     ```
-   - Create a `.env` file with your MongoDB URI and Google Maps API key.
-   - Start the backend:
-     ```bash
-     npm start
-     ```
-3. **Frontend Setup:**
-   - Open a new terminal, go to the frontend folder:
-     ```bash
-     cd ../frontend
-     npm install
-     ```
-   - Create a `.env.local` file with your Google OAuth client ID.
-   - Start the frontend:
-     ```bash
-     npm start
-     ```
-4. **Access the app:**
-   - Frontend: [http://localhost:3005](http://localhost:3005) (or your configured port)
-   - Backend: [http://localhost:5002](http://localhost:5002)
+### 2. Backend Setup
+```bash
+cd backend
+npm install
+```
+- Create a `.env` file in the `backend` directory with the following variables:
+  ```env
+  GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+  GOOGLE_CLIENT_ID=your_google_client_id
+  MONGODB_URI=your_mongodb_connection_string
+  JWT_SECRET=your_jwt_secret
+  PORT=5002
+  ```
+- Start the backend server:
+```bash
+npm start
+```
 
-## Methods & Algorithms
-- **Collaborative Filtering:** Recommends places based on similar users' preferences and ratings.
-- **Geospatial Filtering:** Finds places within a user-defined radius using the Haversine formula.
-- **Route Optimization:** Solves the TSP for selected places to minimize travel time.
-- **User Profile Learning:** Adapts recommendations as users interact with the system.
+### 3. Frontend Setup
+```bash
+cd ../frontend
+npm install
+```
+- Create a `.env` file in the `frontend` directory with the following variables:
+  ```env
+  REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id
+  REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+  ```
+- Start the frontend development server:
+```bash
+npm start
+```
 
-## Future Improvements
-- Social sharing of tours
-- Real-time traffic-aware route optimization
-- Integration with booking APIs
-- Mobile app version
+## Environment Variables
+- **Backend:**
+  - `GOOGLE_MAPS_API_KEY`: Google Maps API key
+  - `GOOGLE_CLIENT_ID`: Google OAuth Client ID
+  - `MONGODB_URI`: MongoDB connection string
+  - `JWT_SECRET`: Secret for JWT authentication
+  - `PORT`: Backend server port (default: 5002)
+- **Frontend:**
+  - `REACT_APP_GOOGLE_CLIENT_ID`: Google OAuth Client ID
+  - `REACT_APP_GOOGLE_MAPS_API_KEY`: Google Maps API key
 
-## Authors & Contributors
-- [Your Name]
-- [Contributors...]
+## Usage
+1. Register or log in (Google login supported).
+2. Set your travel preferences and explore destinations.
+3. Generate and save personalized tour plans.
+4. View and manage your saved tours from the dashboard.
 
-## License
-MIT 
+---
+
+**Note:**
+- Ensure both backend and frontend servers are running.
+- Make sure to use valid Google API keys and MongoDB connection strings. 
